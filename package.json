@@ -13,6 +13,7 @@
     "github-api": "^3.0.0",
     "request": "^2.88.0",
     "serverless-google-cloudfunctions": "^1.1.0",
+    "serverless-plugin-include-dependencies": "^3.1.1",
     "sprintf-js": "^1.1.1"
   }
 }

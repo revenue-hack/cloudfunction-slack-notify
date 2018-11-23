@@ -19,11 +19,19 @@ exports.http = (request, response) => {
     var bodyMessage = '';
     notifications.forEach(e => {
       if (e.unread && !e.repository.private) {
-        bodyMessage += sprintf("%s[%s]: %s %s\n\n",
+        var url = '';
+        if (e.subject.type === 'PullRequest') {
+          url = getPullRequestUrl(e.subject.url)
+        }
+        if (url === '') {
+          url = e.repository.html_url;
+        }
+        bodyMessage += sprintf("%s{%s}[%s]: %s %s\n\n",
             e.updated_at,
+            e.subject.type,
             e.repository.name,
             e.subject.title,
-            e.repository.html_url);
+            url);
       }
     });
     sendToSlack(bodyMessage);
@@ -32,12 +40,28 @@ exports.http = (request, response) => {
   response.status(200).send('ok');
 };
 
+const getPullRequestUrl = (uri) => {
+  request.get({
+    uri: uri,
+    headers: {
+      'user-agent': process.env.gh_api_uri,
+      'authorization': 'token ' + process.env.gh_token
+    }
+  }, (error, res, body) => {
+    if (!error && res.statusCode === 200) {
+      return body.html_url;
+    } else {
+      return '';
+    }
+  });
+};
+
 const allReads = () => {
   request.put({
-    uri: process.env.GH_API_URI + '/notifications',
+    uri: process.env.gh_api_uri + '/notifications',
     headers: {
-      'User-Agent': process.env.GH_API_URI,
-      'Authorization': 'token ' + process.env.GH_TOKEN
+      'user-agent': process.env.gh_api_uri,
+      'authorization': 'token ' + process.env.gh_token
     }
   }, (error, res, body) => {
     if (!error && res.statusCode === 205) {
